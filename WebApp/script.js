@@ -73,20 +73,29 @@ var readFile = () => {
 
 var getInfoTable = (name, ioFields) => {
     let mainList = document.createElement('li')
+    let outerDiv = document.createElement('div')
+    let inputListDiv = document.createElement('div')
+    let outputListDiv = document.createElement('div')
     let inputList = document.createElement('ul')
     let outputList = document.createElement('ul')
+    outerDiv.classList.add('row')
+    inputListDiv.classList.add('col-sm-6')
+    outputListDiv.classList.add('col-sm-6')
     $(mainList).append('<h5>' + name + '</h5>')
-    $(mainList).append('InputFields')
-    $(mainList).append(inputList)
-    $(mainList).append('OutputFields')
-    $(mainList).append(outputList)
+    $(mainList).append(outerDiv)
     try {
         ioFields.in.map(i => $(inputList).append('<li>' + i.Name + ': ' + i.desc + '</li>'))
+        $(inputListDiv).append('InputFields')
+        $(inputListDiv).append(inputList)
+        $(outerDiv).append(inputListDiv)
     } catch (e) {
         console.log('No Input Fields for: ' + name)
     }
     try {
         ioFields.out.map(i => $(outputList).append('<li>' + i.Name + ': ' + i.desc + '</li>'))
+        $(outputListDiv).append('OutputFields')
+        $(outputListDiv).append(outputList)
+        $(outerDiv).append(outputListDiv)
     } catch (e) {
         console.log('No Input Fields for: ' + name)
     }
