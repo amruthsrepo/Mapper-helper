@@ -9,7 +9,8 @@ var readFile = () => {
         dataObjects['Links'] = { in: [], out: [], any: [] }
         dataObjects['Params'] = {}
         dataObjects['Functions'] = {}
-        $('#functionsList').html('');
+        dataObjects['Xlsx'] = { index: new Set(), sheets: {} }
+        $('#functionsList').html('')
         fr.onload = function () {
             $('#mapFileSelectLabel').html(fileName)
             dataObjects.mapToXml = parser.parseFromString(fr.result, "text/xml")
@@ -26,13 +27,13 @@ var readFile = () => {
                     dataObjects.Params[fid] = { in: [], out: [] }
                     if (type) {
                         dataObjects.Params[fid].in.push({
-                            Name: name,
+                            name: name,
                             desc: desc,
                             iid: IID
                         })
                     } else {
                         dataObjects.Params[fid].out.push({
-                            Name: name,
+                            name: name,
                             desc: desc,
                             iid: IID
                         })
@@ -40,13 +41,13 @@ var readFile = () => {
                 } else if (dataObjects.Links.any.includes(IID)) {
                     if (type) {
                         dataObjects.Params[fid].in.push({
-                            Name: name,
+                            name: name,
                             desc: desc,
                             iid: IID
                         })
                     } else {
                         dataObjects.Params[fid].out.push({
-                            Name: name,
+                            name: name,
                             desc: desc,
                             iid: IID
                         })
@@ -61,7 +62,7 @@ var readFile = () => {
                     API: fName,
                     ioFields: dataObjects.Params[fID]
                 }
-                $('#functionsList').append(getInfoTable(fName, dataObjects.Params[fID]))
+                $('#functionsList').append(getInfoTableAndXlsxFormat(fName, dataObjects.Params[fID]))
             })
             dataObjects.functionListNodes = allFuncList
         }
@@ -71,7 +72,7 @@ var readFile = () => {
     }
 }
 
-var getInfoTable = (name, ioFields) => {
+var getInfoTableAndXlsxFormat = (name, ioFields) => {
     let mainList = document.createElement('li')
     let outerDiv = document.createElement('div')
     let inputListDiv = document.createElement('div')
@@ -83,21 +84,62 @@ var getInfoTable = (name, ioFields) => {
     outputListDiv.classList.add('col-sm-6')
     $(mainList).append('<h5>' + name + '</h5>')
     $(mainList).append(outerDiv)
+    let xlsxSheet = [
+        [{ A: 'Go to Index' }],
+        [{ A: '' }, { B: "Input field", C: "Description" }],
+        [{ A: '' }, { B: "Output field", C: "Description" }]
+    ]
     try {
-        ioFields.in.map(i => $(inputList).append('<li>' + i.Name + ': ' + i.desc + '</li>'))
+        ioFields.in.map(i => {
+            $(inputList).append('<li>' + i.name + ': ' + i.desc + '</li>')
+            xlsxSheet[1].push({ B: i.name, C: i.desc })
+        })
         $(inputListDiv).append('InputFields')
         $(inputListDiv).append(inputList)
         $(outerDiv).append(inputListDiv)
+        dataObjects.Xlsx.sheets[name] = [...xlsxSheet[0], ...xlsxSheet[1], ...xlsxSheet[2]]
+        dataObjects.Xlsx.index.add(name)
     } catch (e) {
         console.log('No Input Fields for: ' + name)
     }
     try {
-        ioFields.out.map(i => $(outputList).append('<li>' + i.Name + ': ' + i.desc + '</li>'))
+        ioFields.out.map(i => {
+            $(outputList).append('<li>' + i.name + ': ' + i.desc + '</li>')
+            xlsxSheet[2].push({ B: i.name, C: i.desc })
+        })
         $(outputListDiv).append('OutputFields')
         $(outputListDiv).append(outputList)
         $(outerDiv).append(outputListDiv)
+        dataObjects.Xlsx.sheets[name] = [...xlsxSheet[0], ...xlsxSheet[1], ...xlsxSheet[2]]
+        dataObjects.Xlsx.index.add(name)
     } catch (e) {
         console.log('No Input Fields for: ' + name)
     }
     return mainList
+}
+
+var s2ab = s => {
+    let buf = new ArrayBuffer(s.length)
+    let view = new Uint8Array(buf)
+    for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xFF
+    return buf
+}
+
+var downloadXLSX = fileName => {
+    let sheetNames = Array.from(dataObjects.Xlsx.index), indexSheet = {}, rowNumber = 1
+    let wb = XLSX.utils.book_new()
+    wb.SheetNames.push('Index')
+    for (let sheetName of sheetNames) {
+        let cleanName = sheetName.substr(1).replace('/', '_')
+        wb.SheetNames.push(cleanName)
+        let ws = XLSX.utils.json_to_sheet(dataObjects.Xlsx.sheets[sheetName], { header: [], skipHeader: true })
+        ws['!cols'] = [{ width: 10 }, { width: 10 }, { width: 50 }]
+        ws['A1'].l = { Target: "#Index!A" + rowNumber }
+        wb.Sheets[cleanName] = ws
+        indexSheet['A' + rowNumber++] = { t: "s", v: cleanName, l: { Target: "#" + cleanName + '!A1' } }
+    }
+    indexSheet['!ref'] = 'A1:A' + (rowNumber - 1)
+    indexSheet['!cols'] = [{ width: 45 }]
+    wb.Sheets['Index'] = indexSheet
+    XLSX.writeFile(wb, fileName + '.xlsx')
 }
