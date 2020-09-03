@@ -10,6 +10,7 @@ var readFile = () => {
         dataObjects['Params'] = {}
         dataObjects['Functions'] = {}
         dataObjects['Xlsx'] = { index: new Set(), sheets: {} }
+        dataObjects['MapName'] = fileName.slice(0, -4)
         $('#functionsList').html('')
         fr.onload = function () {
             $('#mapFileSelectLabel').html(fileName)
@@ -64,6 +65,7 @@ var readFile = () => {
                 }
                 $('#functionsList').append(getInfoTableAndXlsxFormat(fName, dataObjects.Params[fID]))
             })
+            $('#downloadExcelButtonDiv').show()
             dataObjects.functionListNodes = allFuncList
         }
         fr.readAsText(selectedFile)
@@ -125,7 +127,7 @@ var s2ab = s => {
     return buf
 }
 
-var downloadXLSX = fileName => {
+var downloadXLSX = () => {
     let sheetNames = Array.from(dataObjects.Xlsx.index), indexSheet = {}, rowNumber = 1
     let wb = XLSX.utils.book_new()
     wb.SheetNames.push('Index')
@@ -133,7 +135,7 @@ var downloadXLSX = fileName => {
         let cleanName = sheetName.substr(1).replace('/', '_')
         wb.SheetNames.push(cleanName)
         let ws = XLSX.utils.json_to_sheet(dataObjects.Xlsx.sheets[sheetName], { header: [], skipHeader: true })
-        ws['!cols'] = [{ width: 10 }, { width: 10 }, { width: 50 }]
+        ws['!cols'] = [{ width: 10 }, { width: 12 }, { width: 50 }]
         ws['A1'].l = { Target: "#Index!A" + rowNumber }
         wb.Sheets[cleanName] = ws
         indexSheet['A' + rowNumber++] = { t: "s", v: cleanName, l: { Target: "#" + cleanName + '!A1' } }
@@ -141,5 +143,5 @@ var downloadXLSX = fileName => {
     indexSheet['!ref'] = 'A1:A' + (rowNumber - 1)
     indexSheet['!cols'] = [{ width: 45 }]
     wb.Sheets['Index'] = indexSheet
-    XLSX.writeFile(wb, fileName + '.xlsx')
+    XLSX.writeFile(wb, dataObjects['MapName'] + '.xlsx')
 }

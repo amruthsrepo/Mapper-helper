@@ -24,23 +24,31 @@
 
     <script src="./script.js"></script>
     <title>Mapper to doc</title>
+
+    <!-- styles -->
+    <link rel="stylesheet" href="./styles.css">
 </head>
 
 <body>
     <h1>Hi, please select a map file</h1>
+    <br>
 
     <div class="container-fluid" id="mainBody">
         <div class="col">
             <div class="row justify-content-center">
                 <div class="col-sm-6">
-                    <div class="row">
-                        <div class="input-group mb-2">
-                            <div class="custom-file">
-                                <input type="file" class="custom-file-input" id="mapFileSelect" onchange={readFile()}>
-                                <label id="mapFileSelectLabel" class="custom-file-label" for="mapFileSelect"></label>
-                            </div>
+                    <div class="input-group mb-2">
+                        <div class="custom-file">
+                            <input type="file" class="custom-file-input" id="mapFileSelect" onchange={readFile()}>
+                            <label id="mapFileSelectLabel" class="custom-file-label" for="mapFileSelect"></label>
                         </div>
                     </div>
+                </div>
+            </div>
+            <div class="row justify-content-center">
+                <div id="downloadExcelButtonDiv" class="col-sm-6 col-md-2 hiddenOnLoad">
+                    <br>
+                    <button class="btn btn-dark" type="button" onclick={downloadXLSX()}>Download as excel</button>
                 </div>
             </div>
             <div class="row" id="useAsConsole">
